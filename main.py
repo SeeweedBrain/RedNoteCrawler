@@ -67,56 +67,58 @@ video_count = sum(os.path.isdir(os.path.join("./notes/videos", name)) for name i
 while total_count < 5000 or video_count < 50:
     print(f"目前总量：{total_count}, 视频总量：{video_count}")
 
-    # 获取当前主页的所有用户信息
-    profiles = get_user_profiles()
+    # # 获取当前主页的所有用户信息
+    # profiles = get_user_profiles()
 
-    # 对每个用户...
-    for profile in profiles:
-        url = urljoin("https://xiaohongshu.com", profile)
-        response = requests.get(url, headers=headers, cookies=cookies)
+    # # 对每个用户...
+    # for profile in profiles:
+    #     url = urljoin("https://xiaohongshu.com", profile)
+    #     response = requests.get(url, headers=headers, cookies=cookies)
+    #     html = response.text
+    response = requests.get('https://www.xiaohongshu.com/explore', cookies=cookies, headers=headers)
+    html = response.text
+    blogs = get_blogs(html)
+
+    # 的每一篇帖子
+    for blog in blogs:
+        blog_url = urljoin("https://xiaohongshu.com", blog)
+        response = requests.get(blog_url, headers=headers, cookies=cookies)
         html = response.text
 
-        blogs = get_blogs(html)
+        notes_block = extract_note_dict(html)
+        firstNoteId = notes_block["firstNoteId"]
+        
 
-        # 的每一篇帖子
-        for blog in blogs:
-            blog_url = urljoin("https://xiaohongshu.com", blog)
-            response = requests.get(blog_url, headers=headers, cookies=cookies)
-            html = response.text
+        # 标题
+        title = notes_block["noteDetailMap"][firstNoteId]["note"]["title"]
 
-            notes_block = extract_note_dict(html)
-            firstNoteId = notes_block["firstNoteId"]
-            
+        # 正文
+        text = notes_block["noteDetailMap"][firstNoteId]["note"]["desc"]
 
-            # 标题
-            title = notes_block["noteDetailMap"][firstNoteId]["note"]["title"]
+        # 图片链接
+        image_urls = [image["infoList"][0]["url"] for image in notes_block["noteDetailMap"][firstNoteId]["note"]["imageList"]]
 
-            # 正文
-            text = notes_block["noteDetailMap"][firstNoteId]["note"]["desc"]
+        # 视频链接(可能无)
+        if "video" in notes_block["noteDetailMap"][firstNoteId]["note"].keys():
+            filedir = f"./notes/videos/笔记{total_count+1}"
+            os.mkdir(filedir)
+            video_url = notes_block["noteDetailMap"][firstNoteId]["note"]["video"]["media"]["stream"]["h264"][0]["masterUrl"]
+            download_video(video_url, filedir+"/video.mp4")
+            video_count += 1
 
-            # 图片链接
-            image_urls = [image["infoList"][0]["url"] for image in notes_block["noteDetailMap"][firstNoteId]["note"]["imageList"]]
+        # 如果只差视频了
+        elif total_count >=5000: continue
+        else:
+            filedir = f"./notes/texts/笔记{total_count+1}"
+            os.mkdir(filedir)
+            for idx, image_url in enumerate(image_urls):
+                download_pic(image_url, filedir+f"/image{idx}.webp")
 
-            # 视频链接(可能无)
-            if "video" in notes_block["noteDetailMap"][firstNoteId]["note"].keys():
-                filedir = f"./notes/videos/笔记{total_count+1}"
-                os.mkdir(filedir)
-                video_url = notes_block["noteDetailMap"][firstNoteId]["note"]["video"]["media"]["stream"]["h264"][0]["masterUrl"]
-                download_video(video_url, filedir+"/video.mp4")
-                video_count += 1
-
-            # 如果只差视频了
-            elif total_count >=5000: continue
-            else:
-                filedir = f"./notes/texts/笔记{total_count+1}"
-                os.mkdir(filedir)
-                for idx, image_url in enumerate(image_urls):
-                    download_pic(image_url, filedir+f"/image{idx}.webp")
-
-            info = {"title":title, "text":text}
-            with open(f'{filedir}/info.json', 'w', encoding='utf-8') as f:
-                json.dump(info, f, ensure_ascii=False, indent=4)
-            total_count += 1
+        info = {"title":title, "text":text}
+        with open(f'{filedir}/info.json', 'w', encoding='utf-8') as f:
+            json.dump(info, f, ensure_ascii=False, indent=4)
+        total_count += 1
+        
 
 
 
