@@ -56,6 +56,9 @@ def get_blogs(html):
 
     return matches
 
+# 若无notes文件夹，则创建
+os.makedirs("./notes/texts", exist_ok=True)
+os.makedirs("./notes/videos", exist_ok=True)
 
 # 数目前已经存了多少篇笔记
 total_count = sum(os.path.isdir(os.path.join("./notes/videos", name)) for name in os.listdir("./notes/videos")) + sum(os.path.isdir(os.path.join("./notes/texts", name)) for name in os.listdir("./notes/texts"))
