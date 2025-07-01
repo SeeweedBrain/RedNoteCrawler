@@ -4,8 +4,7 @@ import re
 from urllib.parse import urljoin
 import json
 import os
-from get_pic import download_pic
-from get_video import download_video
+from utils import download_pic, download_video
 
 
 def extract_note_dict(html_text):
