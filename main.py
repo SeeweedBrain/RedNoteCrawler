@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 import json
 import os
 from utils import download_pic, download_video
+import time
 
 
 def extract_note_dict(html_text):
@@ -118,7 +119,7 @@ while total_count < 5000 or video_count < 50:
         with open(f'{filedir}/info.json', 'w', encoding='utf-8') as f:
             json.dump(info, f, ensure_ascii=False, indent=4)
         total_count += 1
-        
+        time.sleep(5)
 
 
 
